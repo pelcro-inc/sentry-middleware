@@ -1,6 +1,6 @@
 {
   "name": "@pelcro-ps/sentry-middleware",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Sentry Middleware for pelcro integrations",
   "main": "dist/indes.cjs.js",
   "types": "dist/index.d.ts",
