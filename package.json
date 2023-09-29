@@ -4,6 +4,11 @@
   "description": "Sentry Middleware for pelcro integrations",
   "main": "dist/index.cjs.js",
   "types": "dist/index.d.ts",
+  "files": ["dist/**"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pelcro-inc/pelcro-ps-lib-sentry"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "node build.cjs && tsc --emitDeclarationOnly -d --outDir dist",
