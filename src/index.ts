@@ -1,22 +1,30 @@
+import { AWSLambda } from '@sentry/serverless';
 import { type NodeOptions } from '@sentry/node';
-import {init, configureScope, captureException} from '@sentry/node';
 
 
-export default function sentryHandler(sentryOptions: NodeOptions, optionalScopeCb?: CallableFunction) {
+export function sentryMiddleware(sentryOptions: NodeOptions, _optionalScopeCb?: CallableFunction) {
 
-    init(sentryOptions)
+    function initSentry(request: any) {
+        AWSLambda.init(sentryOptions)
 
-    const sentryErrorHandler = (request: any) => {
-        console.info("Error Request : ",JSON.stringify(request))
-
-            configureScope((scope) => {
-                if (optionalScopeCb) optionalScopeCb(scope);
-            });
-
-            captureException(request.error);
+        AWSLambda.configureScope((scope) => {
+            scope.setExtra("data", request?.event?.data)
+            scope.setTag("webhook_id", request?.event?.event_id)
+            scope.setTag("type", request?.event?.webhook_type)
+            scope.setTag(
+                `${request?.event?.type?.split(".")[0]}_id`,
+                request?.event?.data?.object?.id
+            );
+            
+            if (_optionalScopeCb)
+                _optionalScopeCb(scope)
+        })
     }
 
     return {
-        onError: sentryErrorHandler
+        before: initSentry,
+        // onError: sentryErrorHandler
     }
 }
+
+export const wrapper = AWSLambda.wrapHandler;
