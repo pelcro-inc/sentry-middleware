@@ -9,6 +9,9 @@
     "type": "git",
     "url": "https://github.com/pelcro-inc/pelcro-ps-lib-sentry"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "node build.cjs && tsc --emitDeclarationOnly -d --outDir dist",
