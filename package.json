@@ -1,0 +1,25 @@
+{
+  "name": "@pelcro-ps/sentry-middleware",
+  "version": "1.0.0",
+  "description": "Sentry Middleware for pelcro integrations",
+  "main": "dist/indes.cjs.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "node build.cjs && tsc --emitDeclarationOnly -d --outDir dist",
+    "prepack": "npm run build"
+  },
+  "author": "Pelcro Professional Services",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.7.1",
+    "esbuild": "^0.19.4",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.2.2"
+  },
+  "peerDependencies": {
+    "@middy/core": "^2.4.3",
+    "@sentry/node": "^7.72.0",
+    "@types/aws-lambda": "^8.10.122"
+  }
+}
