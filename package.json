@@ -26,7 +26,7 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
-    "@middy/core": "^2.4.3",
+    "@middy/core": "^4.6.4",
     "@sentry/node": "^7.72.0",
     "@sentry/serverless": "^7.72.0",
     "@types/aws-lambda": "^8.10.122"
