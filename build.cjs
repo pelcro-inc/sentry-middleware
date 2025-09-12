@@ -7,15 +7,18 @@ const sharedBuildConfiguration = {
     entryPoints: [entryfile],
     minify: true,
     sourcemap: true,
-    target: ["esnext", "node14.0.0"]
+    target: ["esnext", "node22.0.0"],
+    external: ["@sentry/aws-serverless", "@sentry/node"],
+    keepNames: true,
+    treeShaking: true
 }
 
 // build ESM
-// build({
-//     ...sharedBuildConfiguration,
-//     format: "esm",
-//     outfile: "./dist/index.esm.js",
-// })
+build({
+    ...sharedBuildConfiguration,
+    format: "esm",
+    outfile: "./dist/index.esm.js",
+}).catch(() => process.exit(1));
 
 // build CJS
 build({
@@ -23,4 +26,4 @@ build({
     format: "cjs",
     platform: "node",
     outfile: "./dist/index.cjs.js",
-})
+}).catch(() => process.exit(1));

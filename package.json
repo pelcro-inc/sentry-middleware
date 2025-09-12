@@ -1,9 +1,17 @@
 {
   "name": "@pelcro-inc/sentry-middleware",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "Sentry Middleware for pelcro integrations",
   "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.cjs.js"
+    }
+  },
   "files": ["dist/**"],
   "repository": {
     "type": "git",
@@ -15,20 +23,23 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "node build.cjs && tsc --emitDeclarationOnly -d --outDir dist",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist *.tsbuildinfo"
   },
   "author": "Pelcro Professional Services",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.7.1",
-    "esbuild": "^0.19.4",
-    "rimraf": "^5.0.5",
-    "typescript": "^5.2.2"
+    "@types/node": "^22.10.2",
+    "esbuild": "^0.24.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.3"
   },
   "peerDependencies": {
-    "@middy/core": "^4.6.4",
-    "@sentry/node": "^7.72.0",
-    "@sentry/serverless": "^7.72.0",
-    "@types/aws-lambda": "^8.10.122"
+    "@middy/core": "^5.5.1",
+    "@sentry/node": "^8.45.0",
+    "@sentry/aws-serverless": "^8.45.0",
+    "@types/aws-lambda": "^8.10.152"
   }
 }

@@ -1,21 +1,27 @@
 {
-  "display": "Node LTS",
-  "_version": "18.1.0",
+  "display": "Node LTS 22",
+  "_version": "22.10.0",
   "compilerOptions": {
-    "lib": ["es2023"],
-    "module": "commonjs",
-    "target": "es2022",
+    "lib": ["es2024"],
+    "module": "NodeNext",
+    "target": "es2024",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
+    "moduleResolution": "NodeNext",
     "alwaysStrict": true,
     "declaration": true,
     "noImplicitReturns": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "removeComments": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "useDefineForClassFields": true,
     "types": ["node"]
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }
