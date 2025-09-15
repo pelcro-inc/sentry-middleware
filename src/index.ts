@@ -22,6 +22,18 @@ let _cacheCleanupInterval: NodeJS.Timeout | null = null;
  * Get environment efficiently
  */
 const getEnvironment = (): string => {
+  // Check lambda function name for environment detection
+  const lambdaFunctionName = process.env.AWS_LAMBDA_FUNCTION_NAME || '';
+  
+  // Check if lambda function name indicates environment
+  if (lambdaFunctionName.startsWith('stg')) {
+    return 'staging';
+  }
+  if (lambdaFunctionName.startsWith('prod')) {
+    return 'production';
+  }
+  
+  // Fallback to environment variables
   return (process.env.PELCRO_ENV || 
           process.env.NODE_ENV || 
           process.env.Environment || 
