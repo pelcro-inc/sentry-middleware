@@ -48,9 +48,18 @@ const getIntegrationName = (): string => {
   
   const functionName = process.env.AWS_LAMBDA_FUNCTION_NAME || '';
   
-  // Extract service name after "integration-"
-  const match = functionName.match(/integration-(.+)/);
-  _serviceName = match ? match[1] : 'unknown-integration';
+  // Handle environment-prefixed function names like "stg-pelcro-edweek-iterable"
+  // or "prod-pelcro-edweek-iterable" or "integration-pelcro-edweek-iterable"
+  let match = functionName.match(/^(stg|prod|integration)-(.+)/);
+  
+  if (match) {
+    // Extract the integration name after the environment prefix
+    _serviceName = match[2];
+  } else {
+    // Fallback: try to extract after "integration-" for backward compatibility
+    match = functionName.match(/integration-(.+)/);
+    _serviceName = match ? match[1] : 'unknown-integration';
+  }
   
   return _serviceName;
 };
