@@ -6,7 +6,7 @@
  * ✅ Auto-captures errors from try-catch blocks
  * ✅ Smart filtering - only actionable technical errors  
  * ✅ Automatic Lambda context and integration tagging
- * ❌ Ignores 4xx client errors and validation errors
+ * ✅ Captures 4xx client errors as errors (previously silently dropped)
  */
 
 import * as Sentry from '@sentry/aws-serverless';
@@ -65,25 +65,27 @@ const getIntegrationName = (): string => {
 };
 
 /**
- * Smart error filter - only track actionable technical errors
+ * Smart error filter - returns severity level or false to skip.
+ * 4xx / 5xx / 401 / infra → 'error'
+ * generic/unrecognised → false (suppressed)
  */
-const shouldAutoCapture = (error: any): boolean => {
+const shouldAutoCapture = (error: any): 'warning' | 'error' | false => {
   if (!error || typeof error !== 'object') return false;
-  
+
   const message = error.message || '';
   const status = error.status || error.statusCode || error.response?.status;
-  
+
   // Skip if message is too generic/short (low signal)
-  if (message.length < 10 || 
+  if (message.length < 10 ||
       /^Error$|^undefined$|^null$|^400$|^404$/.test(message)) return false;
-  
-  // Always capture server errors and auth issues
-  if (status >= 500 || status === 401) return true;
-  
-  // Skip other HTTP 4xx client errors (business logic)
-  if (status >= 400 && status < 500) return false;
-  
-  // Capture technical/infrastructure errors
+
+  // Server errors and auth issues → error
+  if (status >= 500 || status === 401) return 'error';
+
+  // All other 4xx client errors → error (previously silently dropped)
+  if (status >= 400 && status < 500) return 'error';
+
+  // Technical/infrastructure errors → error
   const technicalErrors = [
     /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ECONNRESET|EHOSTUNREACH/i,
     /timeout|connection.*failed|network.*error|socket.*hang.*up/i,
@@ -92,9 +94,9 @@ const shouldAutoCapture = (error: any): boolean => {
     /JSON\.parse|cannot.*read.*property|is.*not.*a.*function/i,
     /getaddrinfo.*ENOTFOUND/i
   ];
-  
-  return technicalErrors.some(pattern => 
-    pattern.test(message) || pattern.test(error.name || ''));
+
+  return technicalErrors.some(pattern =>
+    pattern.test(message) || pattern.test(error.name || '')) ? 'error' : false;
 };
 
 /**
@@ -223,8 +225,9 @@ const setupAutoCapture = () => {
     
     // Look for Error objects in arguments
     args.forEach(arg => {
-      if (arg instanceof Error && shouldAutoCapture(arg) && !isDuplicateError(arg)) {
-        
+      const level = arg instanceof Error ? shouldAutoCapture(arg) : false;
+      if (level && !isDuplicateError(arg)) {
+
         // Use setImmediate to avoid blocking the current execution
         setImmediate(() => {
           try {
@@ -232,8 +235,8 @@ const setupAutoCapture = () => {
               scope.setTag('capture_method', 'auto_console_error');
               scope.setTag('integration', getIntegrationName());
               scope.setTag('service', getIntegrationName());
-              scope.setLevel('error');
-              
+              scope.setLevel(level);
+
               Sentry.captureException(arg);
             });
           } catch (e) {
@@ -247,24 +250,25 @@ const setupAutoCapture = () => {
   // Hook into console.log for error patterns
   console.log = function(...args: any[]) {
     originalConsoleLog.apply(console, args);
-    
+
     // Look for error patterns like "Error:", "Failed:", etc.
     args.forEach(arg => {
-      if (typeof arg === 'string' && 
-          /error:|failed:|exception:/i.test(arg) && 
+      if (typeof arg === 'string' &&
+          /error:|failed:|exception:/i.test(arg) &&
           args.length > 1) {
-        
-        const errorArg = args.find(a => a instanceof Error);
-        if (errorArg && shouldAutoCapture(errorArg) && !isDuplicateError(errorArg)) {
-          
+
+        const errorArg: Error | undefined = args.find(a => a instanceof Error);
+        const level = errorArg ? shouldAutoCapture(errorArg) : false;
+        if (errorArg && level && !isDuplicateError(errorArg)) {
+
           setImmediate(() => {
             try {
               Sentry.withScope((scope) => {
                 scope.setTag('capture_method', 'auto_log_pattern');
                 scope.setTag('integration', getIntegrationName());
                 scope.setTag('service', getIntegrationName());
-                scope.setLevel('warning');
-                
+                scope.setLevel(level);
+
                 Sentry.captureException(errorArg);
               });
             } catch (e) {
@@ -359,18 +363,20 @@ export const wrapSentry = (handler: any) => {
  * Manual capture function for explicit error reporting
  */
 export const captureException = (error: Error, context: any = {}) => {
-  if (!_initialized || !shouldAutoCapture(error)) return;
-  
+  const level = shouldAutoCapture(error);
+  if (!_initialized || !level) return;
+
   Sentry.withScope((scope) => {
     if (context.handler) scope.setTag('handler', context.handler);
     if (context.operation) scope.setTag('operation', context.operation);
     if (context.webhookType) scope.setTag('webhook_type', context.webhookType);
-    
+
     scope.setTag('capture_method', 'manual');
     scope.setTag('integration', getIntegrationName());
-    
+    scope.setLevel(level);
+
     if (context.data) scope.setContext('additional_data', context.data);
-    
+
     Sentry.captureException(error);
   });
 };
