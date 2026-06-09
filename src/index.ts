@@ -6,7 +6,7 @@
  * ✅ Auto-captures errors from try-catch blocks
  * ✅ Smart filtering - only actionable technical errors  
  * ✅ Automatic Lambda context and integration tagging
- * ⚠️  Captures 4xx client errors as warnings (previously silently dropped)
+ * ✅ Captures 4xx client errors as errors (previously silently dropped)
  */
 
 import * as Sentry from '@sentry/aws-serverless';
@@ -66,8 +66,7 @@ const getIntegrationName = (): string => {
 
 /**
  * Smart error filter - returns severity level or false to skip.
- * 4xx → 'warning' (observable but not actionable as errors)
- * 5xx / 401 / infra → 'error'
+ * 4xx / 5xx / 401 / infra → 'error'
  * generic/unrecognised → false (suppressed)
  */
 const shouldAutoCapture = (error: any): 'warning' | 'error' | false => {
@@ -83,8 +82,8 @@ const shouldAutoCapture = (error: any): 'warning' | 'error' | false => {
   // Server errors and auth issues → error
   if (status >= 500 || status === 401) return 'error';
 
-  // All other 4xx client errors → warning (previously silently dropped)
-  if (status >= 400 && status < 500) return 'warning';
+  // All other 4xx client errors → error (previously silently dropped)
+  if (status >= 400 && status < 500) return 'error';
 
   // Technical/infrastructure errors → error
   const technicalErrors = [
